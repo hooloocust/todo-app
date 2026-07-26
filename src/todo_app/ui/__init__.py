@@ -10,11 +10,12 @@ class TodoApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("📝 Todo App")
-        self.root.geometry("650x500")
+        self.root.geometry("800x550")
         self.root.resizable(False, False)
 
         self.controller = TodoController()
         self.selected_todo_id = None
+        self._descriptions = {}
 
         self._build_ui()
         self._refresh_list()
@@ -53,9 +54,9 @@ class TodoApp:
         self.tree.heading("status", text="Status")
         self.tree.heading("created", text="Created At")
         self.tree.column("id", width=40, anchor="center")
-        self.tree.column("title", width=280)
+        self.tree.column("title", width=250)
         self.tree.column("status", width=80, anchor="center")
-        self.tree.column("created", width=160, anchor="center")
+        self.tree.column("created", width=140, anchor="center")
 
         scrollbar = ttk.Scrollbar(list_frame, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
@@ -65,18 +66,28 @@ class TodoApp:
 
         self.tree.bind("<<TreeviewSelect>>", self._on_select)
 
+        # ── Description Display ──
+        desc_frame = tk.LabelFrame(self.root, text="Description", padx=10, pady=5)
+        desc_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+        self.desc_text = tk.Text(desc_frame, height=4, wrap="word", state="disabled", font=("TkDefaultFont", 10))
+        self.desc_text.pack(fill="x")
+
     # ── Data Operations ──────────────────────────────────────────────
 
     def _refresh_list(self):
         for item in self.tree.get_children():
             self.tree.delete(item)
+        self._descriptions.clear()
 
         for todo in self.controller.list_todos():
             status = "✅ Done" if todo.is_completed else "⏳ Pending"
             created = todo.created_at.strftime("%Y-%m-%d %H:%M")
             self.tree.insert("", "end", iid=str(todo.id), values=(todo.id, todo.title, status, created))
+            self._descriptions[todo.id] = todo.description or ""
 
         self._clear_fields()
+        self._clear_description()
 
     def _on_select(self, event):
         selected = self.tree.selection()
@@ -90,11 +101,24 @@ class TodoApp:
                 self.desc_entry.delete(0, tk.END)
                 if todo.description:
                     self.desc_entry.insert(0, todo.description)
+                self._show_description(todo.description or "")
+
+    def _show_description(self, text: str):
+        self.desc_text.configure(state="normal")
+        self.desc_text.delete("1.0", tk.END)
+        self.desc_text.insert(tk.END, text)
+        self.desc_text.configure(state="disabled")
 
     def _clear_fields(self):
         self.title_entry.delete(0, tk.END)
         self.desc_entry.delete(0, tk.END)
         self.selected_todo_id = None
+        self._clear_description()
+
+    def _clear_description(self):
+        self.desc_text.configure(state="normal")
+        self.desc_text.delete("1.0", tk.END)
+        self.desc_text.configure(state="disabled")
 
     # ── Actions ──────────────────────────────────────────────────────
 
