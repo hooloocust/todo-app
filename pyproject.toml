@@ -1,0 +1,12 @@
+[project]
+name = "todo-app"
+version = "0.1.0"
+description = "A single-user Todo desktop app built with Tkinter and Peewee ORM"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "peewee>=4.2.6",
+]
+
+[project.scripts]
+todo = "todo_app.main:main"
